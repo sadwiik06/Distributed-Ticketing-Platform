@@ -1,0 +1,55 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: event-service
+              uri: lb://event-service
+              predicates:
+                - Path=/api/events/**
+
+
+            - id: ticket-lock-service
+              uri: lb://ticket-lock-service
+              predicates:
+                - Path=/api/lock/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: ticketLockCircuitBreaker
+                    fallbackUri: forward:/fallback/ticket-lock
+
+            - id: order-service
+              uri: lb://order-service
+              predicates:
+                - Path=/api/orders/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: orderCircuitBreaker
+                    fallbackUri: forward:/fallback/orders
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+resilience4j:
+  circuitbreaker:
+    instances:
+      ticketLockCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000ms
+        permittedNumberOfCallsInHalfOpenState: 3
+      orderCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000ms
