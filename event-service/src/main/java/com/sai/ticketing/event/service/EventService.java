@@ -6,8 +6,8 @@ import com.sai.ticketing.event.model.Event;
 import com.sai.ticketing.event.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.util.List;
 
@@ -15,8 +15,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class EventService {
-    @Autowired
     private final EventRepository eventRepository;
+    private final KafkaTemplate<String, Event> kafkaTemplate;
+
 
     public EventResponse createEvent(EventRequest eventRequest) {
         Event event = Event.builder()
@@ -26,9 +27,12 @@ public class EventService {
                 .eventDate(eventRequest.eventDate())
                 .ticketPrice(eventRequest.ticketPrice())
                 .totalTickets(eventRequest.totalTickets())
+                .availableTickets(eventRequest.totalTickets())
                 .build();
 
         Event savedEvent = eventRepository.save(event);
+        kafkaTemplate.send("event-created-topic", savedEvent.getId(), savedEvent);
+
         log.info("Event {} created successfully", savedEvent.getId());
         return mapToEventResponse(savedEvent);
     }

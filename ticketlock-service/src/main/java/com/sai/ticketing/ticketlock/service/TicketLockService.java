@@ -23,24 +23,32 @@ public class TicketLockService {
     public boolean lockTicket(String eventId, String seatCode, String userId) {
         String lockKey = "lock:event:" + eventId + ":seat:" + seatCode;
 
+        // Check if ticket exists in database
+        Optional<TicketInventory> ticketOpt = ticketInventoryRepository.findByEventIdAndSeatCode(eventId, seatCode);
+        if (ticketOpt.isEmpty()) {
+            log.warn("Seat {} not found for event {}", seatCode, eventId);
+            return false;
+        }
+
+        TicketInventory ticket = ticketOpt.get();
+
+        // If already permanently booked/confirmed, cannot lock
+        if ("CONFIRMED".equalsIgnoreCase(ticket.getStatus())) {
+            log.warn("Seat {} is already permanently confirmed/booked for event {}", seatCode, eventId);
+            return false;
+        }
+
         // Atomic Redis lock with 10-minute TTL
         Boolean acquired = redisTemplate.opsForValue().setIfAbsent(lockKey, userId, Duration.ofMinutes(10));
 
         if (Boolean.TRUE.equals(acquired)) {
-            Optional<TicketInventory> ticketOpt = ticketInventoryRepository.findByEventIdAndSeatCode(eventId, seatCode);
-            if (ticketOpt.isPresent()) {
-                TicketInventory ticket = ticketOpt.get();
-                if ("AVAILABLE".equals(ticket.getStatus())) {
-                    ticket.setStatus("LOCKED");
-                    ticketInventoryRepository.save(ticket);
-                    log.info("Seat {} locked successfully for user {}", seatCode, userId);
-                    return true;
-                }
-            }
-            // Roll back Redis lock if MySQL check fails
-            redisTemplate.delete(lockKey);
+            ticket.setStatus("LOCKED");
+            ticketInventoryRepository.save(ticket);
+            log.info("Seat {} locked successfully for user {}", seatCode, userId);
+            return true;
         }
-        log.warn("Seat {} is already locked or unavailable", seatCode);
+
+        log.warn("Seat {} is already actively locked by another user in Redis", seatCode);
         return false;
     }
 }

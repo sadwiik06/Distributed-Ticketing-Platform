@@ -24,4 +24,5 @@ public class Event {
     private LocalDateTime eventDate;
     private BigDecimal ticketPrice;
     private Integer totalTickets;
+    private Integer availableTickets;
 }

@@ -34,6 +34,34 @@ spring:
                   args:
                     name: orderCircuitBreaker
                     fallbackUri: forward:/fallback/orders
+    routes:
+      # Enable rewrite routes so /aggregate/event-service/v3/api-docs goes to /v3/api-docs
+      - id: event-service-swagger
+        uri: lb://event-service
+        predicates:
+          - Path=/aggregate/event-service/v3/api-docs
+        filters:
+          - SetPath=/v3/api-docs
+
+      - id: ticket-lock-service-swagger
+        uri: lb://ticket-lock-service
+        predicates:
+          - Path=/aggregate/ticket-lock-service/v3/api-docs
+        filters:
+          - SetPath=/v3/api-docs
+
+      - id: order-service-swagger
+        uri: lb://order-service
+        predicates:
+          - Path=/aggregate/order-service/v3/api-docs
+        filters:
+          - SetPath=/v3/api-docs
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8181/realms/ticketing-microservices-realm
+
 
 eureka:
   client:
@@ -53,3 +81,13 @@ resilience4j:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 10000ms
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Event Service
+        url: /aggregate/event-service/v3/api-docs
+      - name: Ticket Lock Service
+        url: /aggregate/ticket-lock-service/v3/api-docs
+      - name: Order Service
+        url: /aggregate/order-service/v3/api-docs

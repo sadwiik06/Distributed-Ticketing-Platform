@@ -1,6 +1,9 @@
-package com.sai.ticketing.order.dto;
+package com.sai.ticketing.event.dto;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record OrderPlacedEvent(
         String orderNumber,
         String eventId,
@@ -9,3 +12,4 @@ public record OrderPlacedEvent(
         BigDecimal totalPrice,
         String seatCode
 ) {}
+

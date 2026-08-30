@@ -37,6 +37,9 @@ public class Order {
     @Column(name = "status", nullable = false)
     private String status;
 
+    @Column(name = "seat_code", nullable = false)
+    private String seatCode;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

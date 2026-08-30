@@ -12,14 +12,14 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/fallback")
 public class FallbackController {
 
-    @PostMapping("/ticket-lock")
+    @RequestMapping("/ticket-lock")
     public Mono<ResponseEntity<String>> ticketLockFallback() {
         return Mono.just(ResponseEntity
                 .status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body("Ticket Lock Service is currently overloaded or undergoing maintenance. Please try again in a few seconds."));
     }
 
-    @PostMapping("/orders")
+    @RequestMapping("/orders")
     public Mono<ResponseEntity<String>> orderFallback() {
         return Mono.just(ResponseEntity
                 .status(HttpStatus.SERVICE_UNAVAILABLE)

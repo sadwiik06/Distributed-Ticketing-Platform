@@ -6,5 +6,6 @@ public record OrderRequest(
         String eventId,
         String userId,
         Integer quantity,
-        BigDecimal pricePerTicket
+        BigDecimal pricePerTicket,
+        String seatCode
 ) {}

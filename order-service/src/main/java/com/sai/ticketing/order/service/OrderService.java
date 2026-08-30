@@ -33,6 +33,7 @@ public class OrderService {
                 .quantity(orderRequest.quantity())
                 .totalPrice(totalPrice)
                 .status("PENDING")
+                .seatCode(orderRequest.seatCode())
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -45,9 +46,10 @@ public class OrderService {
                 orderRequest.eventId(),
                 orderRequest.userId(),
                 orderRequest.quantity(),
-                totalPrice
+                totalPrice,
+                orderRequest.seatCode()
         );
-        kafkaTemplate.send("notification-topic", event);
+        kafkaTemplate.send("order-placed-topic", event.eventId(), event);
         log.info("OrderPlacedEvent published to Kafka for order {}", orderNumber);
 
         return orderNumber;

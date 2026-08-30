@@ -6,5 +6,6 @@ CREATE TABLE t_orders (
                           quantity INT NOT NULL,
                           total_price DECIMAL(10,2) NOT NULL,
                           status VARCHAR(50) NOT NULL, -- PENDING, CONFIRMED, FAILED
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                          seat_code VARCHAR(100) NOT NULL,
+                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
