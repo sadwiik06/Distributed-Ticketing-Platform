@@ -1,11 +1,11 @@
 package com.sai.ticketing.order.model;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "t_orders")
 @Getter
@@ -34,12 +34,29 @@ public class Order {
     @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private String status;
+    private OrderStatus status;
 
     @Column(name = "seat_code", nullable = false)
     private String seatCode;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    public String getOrderId() {
+        return orderNumber;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderNumber = orderId;
+    }
+
+    public BigDecimal getAmount() {
+        return totalPrice;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.totalPrice = amount;
+    }
 }

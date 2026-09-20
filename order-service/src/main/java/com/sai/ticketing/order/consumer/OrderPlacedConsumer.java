@@ -1,6 +1,7 @@
 package com.sai.ticketing.order.consumer;
 
 import com.sai.ticketing.order.dto.OrderPlacedEvent;
+import com.sai.ticketing.order.model.OrderStatus;
 import com.sai.ticketing.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class OrderPlacedConsumer {
 
         orderRepository.findByOrderNumber(event.orderNumber())
                 .ifPresent(order -> {
-                    order.setStatus("CONFIRMED");
+                    order.setStatus(OrderStatus.CONFIRMED);
                     orderRepository.save(order);
                     log.info("Order {} status updated to CONFIRMED in DB", event.orderNumber());
                 });

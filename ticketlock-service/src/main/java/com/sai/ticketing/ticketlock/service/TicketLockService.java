@@ -1,10 +1,12 @@
 package com.sai.ticketing.ticketlock.service;
 
+import com.sai.ticketing.ticketlock.dto.TicketLockedEvent;
 import com.sai.ticketing.ticketlock.model.TicketInventory;
 import com.sai.ticketing.ticketlock.repository.TicketInventoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +20,10 @@ public class TicketLockService {
 
     private final StringRedisTemplate redisTemplate;
     private final TicketInventoryRepository ticketInventoryRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
-    public boolean lockTicket(String eventId, String seatCode, String userId) {
+    public boolean lockSeat(String eventId, String seatCode, String userId) {
         String lockKey = "lock:event:" + eventId + ":seat:" + seatCode;
 
         // Check if ticket exists in database
@@ -45,10 +48,21 @@ public class TicketLockService {
             ticket.setStatus("LOCKED");
             ticketInventoryRepository.save(ticket);
             log.info("Seat {} locked successfully for user {}", seatCode, userId);
+
+            // Publish lock event to Kafka
+            TicketLockedEvent event = new TicketLockedEvent(eventId, seatCode, userId, System.currentTimeMillis());
+            kafkaTemplate.send("ticket-lock-events", seatCode, event);
+            log.info("TicketLockedEvent published to Kafka for seat {}", seatCode);
+
             return true;
         }
 
         log.warn("Seat {} is already actively locked by another user in Redis", seatCode);
         return false;
+    }
+
+    @Transactional
+    public boolean lockTicket(String eventId, String seatCode, String userId) {
+        return lockSeat(eventId, seatCode, userId);
     }
 }

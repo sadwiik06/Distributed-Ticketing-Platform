@@ -47,11 +47,8 @@ export function setup() {
 // 2. MAIN VIRTUAL USER LOAD LOOP
 export default function (data) {
     const eventId = '6a93f2ec90262125bac74cf0';
-    const seatCode = `A-${Math.floor(Math.random() * 50) + 1}`; // Random seat A-1 to A-50
-    const userId = `USER_${__VU}`;                              // Dynamic VU ID
-
-    // Construct URL with @RequestParam values
-    const url = `http://localhost:8081/api/lock?eventId=${eventId}&seatCode=${seatCode}&userId=${userId}`;
+    // URL query params simplified—userId extracted directly from JWT!
+    const url = `http://localhost:8083/api/lock?eventId=${eventId}&seatCode=${seatCode}`;
 
     const params = {
         headers: {
