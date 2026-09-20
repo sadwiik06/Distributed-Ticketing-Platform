@@ -18,6 +18,7 @@ public class SecurityConfig {
                         .pathMatchers("/eureka/**", "/fallback/**","/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
+                                "/actuator/**",
                                 "/aggregate/**").permitAll()
                         // Protect all API routes - require authenticated JWT token
                         .anyExchange().authenticated()

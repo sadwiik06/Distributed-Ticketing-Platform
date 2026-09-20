@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8083
 
 spring:
   application:
@@ -91,3 +91,20 @@ springdoc:
         url: /aggregate/ticket-lock-service/v3/api-docs
       - name: Order Service
         url: /aggregate/order-service/v3/api-docs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,prometheus,metrics"
+  tracing:
+    sampling:
+      probability: 1.0 # 1.0 means sample 100% of requests (set to 0.1 in production)
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+
+# Custom Log Format
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
