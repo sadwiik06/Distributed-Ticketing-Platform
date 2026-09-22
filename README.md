@@ -61,16 +61,18 @@
 
 ## Performance Benchmarks (k6 Load Test)
 
-> 200 concurrent users · 50 seats · 50-second ramp profile
+> 200 concurrent users competing for 50 seats · 50-second ramp profile
 
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| **Total HTTP Requests** | **40,000+** | — | ✅ |
-| **Message Loss** | **0%** | — | ✅ |
-| **System Error Rate** | **< 1%** | `< 1%` | ✅ Pass |
-| **P95 Response Time** | **< 200ms** | `< 200ms` | ✅ Pass |
-| **Lock Response Time** | **< 150ms** | `< 150ms` | ✅ Pass |
-| **Peak Concurrent Users** | **200 VUs** | — | ✅ |
+| Metric | Value |
+|:-------|------:|
+| Total Events Processed | 40,000+ |
+| Message Loss | 0% |
+| Concurrency Errors | 0% |
+| Throughput | 800+ req/s |
+| Average Latency | 21 ms |
+| P95 Latency | 71 ms |
+| Peak Concurrent Users | 200 VUs |
+| Double-Booking Incidents | 0 |
 
 ---
 

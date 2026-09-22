@@ -35,5 +35,7 @@ credentials.json
 
 # Load testing scripts containing Keycloak credentials
 load-test.js
+stress-test.js
 *.k6.js
 k6-results.json
+
