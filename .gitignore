@@ -1,0 +1,39 @@
+# Compiled class files & build artifacts
+**/target/
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+**/*.zip
+**/*.tar.gz
+**/*.rar
+
+# Log files
+**/*.log
+**/logs/
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.swp
+*.DS_Store
+Thumbs.db
+
+# Maven wrapper temp files
+**/.mvn/wrapper/maven-wrapper.jar
+**/props.txt
+
+# Secrets, Environment & Credentials (Contains client_secret, passwords, JWTs)
+.env
+.env.*
+*.env
+secrets.json
+credentials.json
+
+# Load testing scripts containing Keycloak credentials
+load-test.js
+*.k6.js
+k6-results.json

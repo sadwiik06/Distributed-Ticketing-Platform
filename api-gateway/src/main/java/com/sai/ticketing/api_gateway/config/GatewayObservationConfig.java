@@ -18,7 +18,6 @@ public class GatewayObservationConfig {
         }
 
         return (exchange, chain) -> {
-            // Natively scopes the observation context across the reactive pipeline lifecycle
             Observation observation = Observation.createNotStarted("gateway.request", registry);
 
             return chain.filter(exchange)

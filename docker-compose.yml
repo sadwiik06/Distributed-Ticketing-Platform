@@ -122,7 +122,7 @@ services:
     image: ticketing/api-gateway:latest
     container_name: api-gateway
     ports:
-      - "8083:8083" # Host 8083 -> Container 8080
+      - "8083:8083"
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATA_REDIS_HOST=redis-cache
@@ -138,7 +138,7 @@ services:
     image: ticketing/event-service:latest
     container_name: event-service
     ports:
-      - "8080:8080" # Host 8080 -> Container 8081
+      - "8080:8080"
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATA_MONGODB_URI=mongodb://root:rootpassword@mongo-event-db:27017/event_db?authSource=admin
@@ -154,7 +154,7 @@ services:
     image: ticketing/ticketlock-service:latest
     container_name: ticketlock-service
     ports:
-      - "8081:8081" # Host 8081 -> Container 8082
+      - "8081:8081"
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
       - SPRING_DATA_REDIS_HOST=redis-cache

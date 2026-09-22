@@ -40,7 +40,6 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
 
             log.info("Seat lock expired for event: {}, seat: {}. Reverting to AVAILABLE.", eventId, seatCode);
 
-            // Revert seat in MySQL to AVAILABLE if not CONFIRMED
             ticketInventoryRepository.findByEventIdAndSeatCode(eventId, seatCode)
                     .ifPresent(ticket -> {
                         if ("LOCKED".equalsIgnoreCase(ticket.getStatus())) {

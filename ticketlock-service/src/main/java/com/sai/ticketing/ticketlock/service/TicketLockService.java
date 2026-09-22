@@ -35,7 +35,7 @@ public class TicketLockService {
 
         TicketInventory ticket = ticketOpt.get();
 
-        // If already permanently booked/confirmed, cannot lock
+        // If already permanently confirmed, cannot lock
         if ("CONFIRMED".equalsIgnoreCase(ticket.getStatus())) {
             log.warn("Seat {} is already permanently confirmed/booked for event {}", seatCode, eventId);
             return false;

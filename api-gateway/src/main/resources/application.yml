@@ -6,6 +6,52 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      routes:
+        - id: event-service
+          uri: lb://event-service
+          predicates:
+            - Path=/api/events/**
+
+        - id: ticket-lock-service
+          uri: lb://ticket-lock-service
+          predicates:
+            - Path=/api/lock/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ticketLockCircuitBreaker
+                fallbackUri: forward:/fallback/ticket-lock
+
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderCircuitBreaker
+                fallbackUri: forward:/fallback/orders
+
+        - id: event-service-swagger
+          uri: lb://event-service
+          predicates:
+            - Path=/aggregate/event-service/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: ticket-lock-service-swagger
+          uri: lb://ticket-lock-service
+          predicates:
+            - Path=/aggregate/ticket-lock-service/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
+
+        - id: order-service-swagger
+          uri: lb://order-service
+          predicates:
+            - Path=/aggregate/order-service/v3/api-docs
+          filters:
+            - SetPath=/v3/api-docs
       server:
         webflux:
           routes:
@@ -13,7 +59,6 @@ spring:
               uri: lb://event-service
               predicates:
                 - Path=/api/events/**
-
 
             - id: ticket-lock-service
               uri: lb://ticket-lock-service
@@ -34,28 +79,27 @@ spring:
                   args:
                     name: orderCircuitBreaker
                     fallbackUri: forward:/fallback/orders
-    routes:
-      # Enable rewrite routes so /aggregate/event-service/v3/api-docs goes to /v3/api-docs
-      - id: event-service-swagger
-        uri: lb://event-service
-        predicates:
-          - Path=/aggregate/event-service/v3/api-docs
-        filters:
-          - SetPath=/v3/api-docs
 
-      - id: ticket-lock-service-swagger
-        uri: lb://ticket-lock-service
-        predicates:
-          - Path=/aggregate/ticket-lock-service/v3/api-docs
-        filters:
-          - SetPath=/v3/api-docs
+            - id: event-service-swagger
+              uri: lb://event-service
+              predicates:
+                - Path=/aggregate/event-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
 
-      - id: order-service-swagger
-        uri: lb://order-service
-        predicates:
-          - Path=/aggregate/order-service/v3/api-docs
-        filters:
-          - SetPath=/v3/api-docs
+            - id: ticket-lock-service-swagger
+              uri: lb://ticket-lock-service
+              predicates:
+                - Path=/aggregate/ticket-lock-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
+
+            - id: order-service-swagger
+              uri: lb://order-service
+              predicates:
+                - Path=/aggregate/order-service/v3/api-docs
+              filters:
+                - SetPath=/v3/api-docs
   security:
     oauth2:
       resourceserver:
@@ -73,16 +117,29 @@ resilience4j:
   circuitbreaker:
     instances:
       ticketLockCircuitBreaker:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10000ms
-        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 60
+        waitDurationInOpenState: 5000ms
+        permittedNumberOfCallsInHalfOpenState: 10
       orderCircuitBreaker:
-        slidingWindowSize: 10
-        failureRateThreshold: 50
-        waitDurationInOpenState: 10000ms
+        slidingWindowSize: 100
+        minimumNumberOfCalls: 20
+        failureRateThreshold: 60
+        waitDurationInOpenState: 5000ms
+        permittedNumberOfCallsInHalfOpenState: 10
+  timelimiter:
+    instances:
+      ticketLockCircuitBreaker:
+        timeoutDuration: 3s
+      orderCircuitBreaker:
+        timeoutDuration: 3s
 springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
   swagger-ui:
+    enabled: true
     path: /swagger-ui.html
     urls:
       - name: Event Service

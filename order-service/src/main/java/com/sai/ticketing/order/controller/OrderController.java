@@ -18,8 +18,11 @@ public class OrderController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public String placeOrder(@RequestBody OrderRequest orderRequest) {
-        return orderService.placeOrder(orderRequest);
+    public String placeOrder(
+            @RequestBody OrderRequest orderRequest,
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = (jwt != null) ? jwt.getSubject() : orderRequest.userId();
+        return orderService.placeOrder(orderRequest, userId);
     }
 
     @PostMapping("/checkout")

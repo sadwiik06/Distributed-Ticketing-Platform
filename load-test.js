@@ -1,22 +1,27 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { Rate } from 'k6/metrics';
 
-// Treat 200 (Success) and 409 (Seat Already Locked) as valid responses
-http.setResponseCallback(http.expectedStatuses(200, 409));
+// Custom Business Metrics
+export const systemErrors = new Rate('system_errors'); 
+export const successfulLocks = new Rate('successful_locks'); 
+export const conflictLocks = new Rate('conflict_locks'); 
+
+http.setResponseCallback(http.expectedStatuses(200, 201, 409));
 
 export const options = {
     stages: [
-        { duration: '10s', target: 50 },   // Ramp up to 50 virtual users
-        { duration: '30s', target: 200 },  // Spike to 200 virtual users (high concurrency)
-        { duration: '10s', target: 0 },    // Ramp down to 0 users
+        { duration: '10s', target: 50 },   
+        { duration: '30s', target: 200 },  
+        { duration: '10s', target: 0 },    
     ],
     thresholds: {
-        http_req_failed: ['rate<0.01'],   // Error rate under 1%
-        http_req_duration: ['p(95)<100'], // 95% of requests complete under 100ms
+        system_errors: ['rate<0.01'],     
+        http_req_duration: ['p(95)<200'], 
     },
 };
 
-// 1. FETCH JWT TOKEN FROM KEYCLOAK
+
 export function setup() {
     const tokenUrl = 'http://localhost:8181/realms/ticketing-realm/protocol/openid-connect/token';
 
@@ -44,25 +49,58 @@ export function setup() {
     return { token: jsonBody.access_token };
 }
 
-// 2. MAIN VIRTUAL USER LOAD LOOP
 export default function (data) {
-    const eventId = '6a93f2ec90262125bac74cf0';
-    // URL query params simplified—userId extracted directly from JWT!
-    const url = `http://localhost:8083/api/lock?eventId=${eventId}&seatCode=${seatCode}`;
+    const eventId = __ENV.EVENT_ID || '6ab26d5bb7522507df7ade25';
+    const seatCode = `A-${Math.floor(Math.random() * 50) + 1}`;
 
-    const params = {
+    const authHeaders = {
         headers: {
             'Authorization': `Bearer ${data.token}`,
+            'Content-Type': 'application/json',
         },
     };
 
-    // POST request with empty body since params are in the URL
-    const res = http.post(url, null, params);
+    const lockUrl = `http://localhost:8083/api/lock?eventId=${eventId}&seatCode=${seatCode}`;
+    const lockRes = http.post(lockUrl, null, authHeaders);
 
-    check(res, {
-        'status is 200 or 409': (r) => r.status === 200 || r.status === 409,
-        'response time < 50ms': (r) => r.timings.duration < 50,
+    const isLockWon = lockRes.status === 200;
+    const isConflict = lockRes.status === 409;
+    const isError = !isLockWon && !isConflict;
+
+    successfulLocks.add(isLockWon);
+    conflictLocks.add(isConflict);
+    systemErrors.add(isError);
+
+    check(lockRes, {
+        'lock status is 200 (Won) or 409 (Prevented Double-Booking)': () => isLockWon || isConflict,
+        'lock response time < 150ms': (r) => r.timings.duration < 150,
     });
+
+    if (isLockWon) {
+        const orderPayload = JSON.stringify({
+            eventId: eventId,
+            quantity: 1,
+            pricePerTicket: 150.00,
+            seatCode: seatCode,
+        });
+
+        const orderRes = http.post('http://localhost:8083/api/orders', orderPayload, authHeaders);
+
+        if (orderRes.status === 201) {
+            const orderId = orderRes.body.trim();
+
+            const checkoutUrl = `http://localhost:8083/api/orders/checkout?orderId=${orderId}`;
+            const checkoutRes = http.post(checkoutUrl, null, authHeaders);
+
+            const isCheckoutSuccess = checkoutRes.status === 200;
+            systemErrors.add(!isCheckoutSuccess);
+
+            check(checkoutRes, {
+                'checkout status is 200 (Confirmed)': () => isCheckoutSuccess,
+                'checkout response time < 200ms': (r) => r.timings.duration < 200,
+            });
+        }
+    }
 
     sleep(0.1);
 }

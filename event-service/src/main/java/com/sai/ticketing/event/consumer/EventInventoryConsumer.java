@@ -18,7 +18,7 @@ public class EventInventoryConsumer {
     public void handleOrderPlaced(OrderPlacedEvent event) {
         log.info("EventService received OrderPlacedEvent for Event ID: {}", event.eventId());
 
-        // Decrement available ticket count in MongoDB
+        // Decrement available ticket count
         eventRepository.findById(event.eventId()).ifPresent(eventEntity -> {
             eventEntity.setAvailableTickets(eventEntity.getAvailableTickets() - 1);
             eventRepository.save(eventEntity);

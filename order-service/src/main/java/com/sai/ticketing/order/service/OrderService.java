@@ -25,14 +25,17 @@ public class OrderService {
     private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
     @Transactional
-    public String placeOrder(OrderRequest orderRequest) {
+    public String placeOrder(OrderRequest orderRequest, String authenticatedUserId) {
         String orderNumber = UUID.randomUUID().toString();
         BigDecimal totalPrice = orderRequest.pricePerTicket().multiply(BigDecimal.valueOf(orderRequest.quantity()));
+        String effectiveUserId = (authenticatedUserId != null && !authenticatedUserId.isBlank()) 
+                ? authenticatedUserId.trim() 
+                : (orderRequest.userId() != null ? orderRequest.userId().trim() : "anonymous");
 
         Order order = Order.builder()
                 .orderNumber(orderNumber)
                 .eventId(orderRequest.eventId())
-                .userId(orderRequest.userId())
+                .userId(effectiveUserId)
                 .quantity(orderRequest.quantity())
                 .totalPrice(totalPrice)
                 .status(OrderStatus.PENDING)
@@ -41,13 +44,13 @@ public class OrderService {
                 .build();
 
         orderRepository.save(order);
-        log.info("Order {} created with PENDING status", orderNumber);
+        log.info("Order {} created with PENDING status for user {}", orderNumber, effectiveUserId);
 
         // Push Order Event to Kafka topic for async processing
         OrderPlacedEvent event = new OrderPlacedEvent(
                 orderNumber,
                 orderRequest.eventId(),
-                orderRequest.userId(),
+                effectiveUserId,
                 orderRequest.quantity(),
                 totalPrice,
                 orderRequest.seatCode()
@@ -56,6 +59,11 @@ public class OrderService {
         log.info("OrderPlacedEvent published to Kafka for order {}", orderNumber);
 
         return orderNumber;
+    }
+
+    @Transactional
+    public String placeOrder(OrderRequest orderRequest) {
+        return placeOrder(orderRequest, orderRequest.userId());
     }
 
     @Transactional
@@ -90,12 +98,10 @@ public class OrderService {
             return true;
         }
 
-        // Mock payment processing success -> Update Order Status to CONFIRMED
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
         log.info("Payment successful. Order {} status updated to CONFIRMED", orderId);
 
-        // Notify downstream services (e.g. ticketlock-service to permanently book seat & clear Redis lock)
         OrderPlacedEvent event = new OrderPlacedEvent(
                 order.getOrderNumber(),
                 order.getEventId(),

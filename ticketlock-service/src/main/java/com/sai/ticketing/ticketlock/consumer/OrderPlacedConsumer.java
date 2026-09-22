@@ -26,7 +26,6 @@ public class OrderPlacedConsumer {
     public void handleOrderPlaced(OrderPlacedEvent event) {
         log.info("TicketLockService received OrderPlacedEvent for seat: {}", event.seatCode());
 
-        // Update DB: Mark seat as permanently booked
         ticketInventoryRepository.findByEventIdAndSeatCode(event.eventId(), event.seatCode())
                 .ifPresent(ticket -> {
                     ticket.setStatus("CONFIRMED");
@@ -34,8 +33,7 @@ public class OrderPlacedConsumer {
                     log.info("Seat {} status updated to CONFIRMED in DB", event.seatCode());
                 });
 
-        // Release temporary Redis lock
         String lockKey = "lock:event:" + event.eventId() + ":seat:" + event.seatCode();
         redisTemplate.delete(lockKey);
     }
-}
+}

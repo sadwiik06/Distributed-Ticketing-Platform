@@ -32,7 +32,6 @@ public class OrderEventListener {
         log.info("Received ticket lock event for user: {}, seat: {}, event: {}",
                 event.getUserId(), event.getSeatCode(), event.getEventId());
 
-        // Create initial PENDING order tied to the authenticated Keycloak User
         Order order = new Order();
         order.setOrderId(UUID.randomUUID().toString());
         order.setUserId(event.getUserId());

@@ -15,11 +15,19 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         // Permit public access to Eureka dashboard / static endpoints and fallback paths
-                        .pathMatchers("/eureka/**", "/fallback/**","/swagger-ui.html",
+                        .pathMatchers(
+                                "/eureka/**",
+                                "/fallback/**",
+                                "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
+                                "/v3/api-docs",
+                                "/webjars/**",
+                                "/swagger-resources/**",
                                 "/actuator/**",
-                                "/aggregate/**").permitAll()
+                                "/aggregate/**",
+                                "/favicon.ico"
+                        ).permitAll()
                         // Protect all API routes - require authenticated JWT token
                         .anyExchange().authenticated()
                 )
